@@ -38876,12 +38876,32 @@ var GraphObject = /*#__PURE__*/function () {
         max: 2000
       }
     };
-    this._step = 1;
+    this._step = 0.5;
     this.surfaceMesh = undefined;
     this.scene.add(this.objectGroup);
   }
 
   _createClass(GraphObject, [{
+    key: "_calculateRangeLength",
+    value: function _calculateRangeLength(range) {
+      return Math.abs(range.max - range.min);
+    }
+  }, {
+    key: "_updateRangeLength",
+    value: function _updateRangeLength(val, range) {
+      var currRange = this._calculateRangeLength(range);
+
+      if (val == currRange) {
+        return;
+      }
+
+      var dx = val - currRange;
+      range.min -= dx / 2;
+      range.max += dx / 2;
+
+      this._updateGraph();
+    }
+  }, {
     key: "setRangeX",
     value: function setRangeX(min, max) {
       this.range.x.min = min;
@@ -39019,17 +39039,19 @@ var GraphObject = /*#__PURE__*/function () {
 
       var updateFunc = this._updateGraph.bind(this);
 
-      graphControls.add(this, '_functionString').listen().onFinishChange(updateFunc); // graphControls.add(this, 'heightFunction').listen()		// Instantly updates
+      graphControls.add(this, '_functionString').name("Function").listen().onFinishChange(updateFunc); //graphControls.add(this, 'heightFunction').listen()		// Instantly updates
 
       var xRangeFolder = graphControls.addFolder("X Range");
-      xRangeFolder.add(this.range.x, 'min', -100, 100).step(0.5).listen().onFinishChange(updateFunc);
-      xRangeFolder.add(this.range.x, 'max', -100, 100).step(0.5).listen().onFinishChange(updateFunc);
+      xRangeFolder.add(this, 'xRangeLength', 0, 200).name("Length").step(0.25).listen();
+      xRangeFolder.add(this.range.x, 'min', -100, 100).name("Min").step(0.5).listen().onFinishChange(updateFunc);
+      xRangeFolder.add(this.range.x, 'max', -100, 100).name("Max").step(0.5).listen().onFinishChange(updateFunc);
       var yRangeFolder = graphControls.addFolder("Y Range");
-      yRangeFolder.add(this.range.y, 'min', -100, 100).step(0.5).listen().onFinishChange(updateFunc);
-      yRangeFolder.add(this.range.y, 'max', -100, 100).step(0.5).listen().onFinishChange(updateFunc);
-      graphControls.add(this, 'step', 0.05, 2).step(0.05).listen(); // .onFinishChange(updateFunc);
+      yRangeFolder.add(this, 'yRangeLength', 0, 200).name("Length").step(0.25).listen();
+      yRangeFolder.add(this.range.y, 'min', -100, 100).name("Min").step(0.5).listen().onFinishChange(updateFunc);
+      yRangeFolder.add(this.range.y, 'max', -100, 100).name("Max").step(0.5).listen().onFinishChange(updateFunc);
+      graphControls.add(this, 'step', 0.05, 2).name("Step").step(0.05).listen(); // .onFinishChange(updateFunc);
 
-      graphControls.add(this, 'showAxes').listen(); //.onFinishChange((val) => { axesHelper.material.visible = val; });
+      graphControls.add(this, 'showAxes').name("Show Axes").listen(); //.onFinishChange((val) => { axesHelper.material.visible = val; });
     }
   }, {
     key: "update",
@@ -39073,6 +39095,22 @@ var GraphObject = /*#__PURE__*/function () {
       this._graphColor = val;
 
       this._updateGraph();
+    }
+  }, {
+    key: "xRangeLength",
+    get: function get() {
+      return this._calculateRangeLength(this.range.x);
+    },
+    set: function set(val) {
+      this._updateRangeLength(val, this.range.x);
+    }
+  }, {
+    key: "yRangeLength",
+    get: function get() {
+      return this._calculateRangeLength(this.range.y);
+    },
+    set: function set(val) {
+      this._updateRangeLength(val, this.range.y);
     }
   }]);
 
@@ -42279,7 +42317,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "62222" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "65461" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

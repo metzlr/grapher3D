@@ -25,7 +25,7 @@ class GraphObject {
 			y: {min: -10, max: 10},
 			z: {min: -2000, max: 2000},
 		};
-		this._step = 1;
+		this._step = 0.5;
 
 		this.surfaceMesh = undefined;
 
@@ -59,6 +59,31 @@ class GraphObject {
 		this._graphColor = val;
 		this._updateGraph();
 	}
+	get xRangeLength() {
+		return this._calculateRangeLength(this.range.x);
+	}
+	set xRangeLength(val) {
+		this._updateRangeLength(val, this.range.x)
+	}
+	get yRangeLength() {
+		return this._calculateRangeLength(this.range.y);
+	}
+	set yRangeLength(val) {
+		this._updateRangeLength(val, this.range.y)
+	}
+	
+	_calculateRangeLength(range) {
+		return Math.abs(range.max - range.min);
+	}
+	_updateRangeLength(val, range) {
+		let currRange = this._calculateRangeLength(range);
+		if (val == currRange) { return; }
+		let dx = val - currRange;
+		range.min -= dx/2; 
+		range.max += dx/2;
+		this._updateGraph();
+	}
+
 
 	setRangeX(min, max) {
 		this.range.x.min = min;
@@ -185,16 +210,18 @@ class GraphObject {
 		let graphControls = gui.addFolder(name);
 		// console.log(this.heightFunction, this.showAxes);
 		const updateFunc = this._updateGraph.bind(this);
-		graphControls.add(this, '_functionString').listen().onFinishChange(updateFunc);
-		// graphControls.add(this, 'heightFunction').listen()		// Instantly updates
+		graphControls.add(this, '_functionString').name("Function").listen().onFinishChange(updateFunc);
+		//graphControls.add(this, 'heightFunction').listen()		// Instantly updates
 		let xRangeFolder = graphControls.addFolder("X Range");
-		xRangeFolder.add(this.range.x, 'min', -100, 100).step(0.5).listen().onFinishChange(updateFunc);
-		xRangeFolder.add(this.range.x, 'max', -100, 100).step(0.5).listen().onFinishChange(updateFunc);
+		xRangeFolder.add(this, 'xRangeLength', 0, 200).name("Length").step(0.25).listen();
+		xRangeFolder.add(this.range.x, 'min', -100, 100).name("Min").step(0.5).listen().onFinishChange(updateFunc);
+		xRangeFolder.add(this.range.x, 'max', -100, 100).name("Max").step(0.5).listen().onFinishChange(updateFunc);
 		let yRangeFolder = graphControls.addFolder("Y Range");
-		yRangeFolder.add(this.range.y, 'min', -100, 100).step(0.5).listen().onFinishChange(updateFunc);
-		yRangeFolder.add(this.range.y, 'max', -100, 100).step(0.5).listen().onFinishChange(updateFunc);
-		graphControls.add(this, 'step', 0.05, 2).step(0.05).listen();// .onFinishChange(updateFunc);
-		graphControls.add(this, 'showAxes').listen();//.onFinishChange((val) => { axesHelper.material.visible = val; });
+		yRangeFolder.add(this, 'yRangeLength', 0, 200).name("Length").step(0.25).listen();
+		yRangeFolder.add(this.range.y, 'min', -100, 100).name("Min").step(0.5).listen().onFinishChange(updateFunc);
+		yRangeFolder.add(this.range.y, 'max', -100, 100).name("Max").step(0.5).listen().onFinishChange(updateFunc);
+		graphControls.add(this, 'step', 0.05, 2).name("Step").step(0.05).listen();// .onFinishChange(updateFunc);
+		graphControls.add(this, 'showAxes').name("Show Axes").listen();//.onFinishChange((val) => { axesHelper.material.visible = val; });
 	}
 
   update() {
