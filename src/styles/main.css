@@ -1,7 +1,9 @@
-body {
+html, body {
   margin: 0;
+  height: 100%; /* force body to fill window */
 }
 canvas {
   width: 100%;
   height: 100%;
+  display: block;
 }

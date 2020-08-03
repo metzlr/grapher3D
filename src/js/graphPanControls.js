@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 
 class GraphPanControls {
-  constructor(domElement, camera, panSpeed, onStartPan, onMovePan, onEndPan) {
+  constructor(camera, domElement, panSpeed, onStartPan, onMovePan, onEndPan) {
     let _this = this;
     this.camera = camera;
     this.domElement = domElement;

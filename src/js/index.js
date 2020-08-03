@@ -13,7 +13,7 @@ import helvetiker_regular from 'three/examples/fonts/helvetiker_regular.typeface
 function grapher() {
 	"use strict";
 
-	let scene, camera, renderer, controls, graph, stats, gui, panControls, font;
+	let scene, camera, renderer, controls, graph, stats, gui, panControls, font, errorTextMesh;
 	let axesHelper;
 	let graphSettings = {
 		function: '4*sin(x) * cos(y)',
@@ -24,6 +24,8 @@ function grapher() {
 		yRangeMax: 15,
 		step: 1,
 		showAxes: true,
+		showSurface: true,
+		showVertices: false,
 	}
 
 	const mathParser = new Parser({
@@ -77,6 +79,7 @@ function grapher() {
 			},
 			function() {	// On end pan
 				controls.enabled = true;
+				updateGraph();
 			}
 		);
 
@@ -91,6 +94,8 @@ function grapher() {
 		graphControls.add(graphSettings, 'yRangeMin', -100, 100).step(0.5).listen().onFinishChange(updateGraph);
 		graphControls.add(graphSettings, 'yRangeMax', -100, 100).step(0.5).listen().onFinishChange(updateGraph);
 		graphControls.add(graphSettings, 'step', 0.05, 2).step(0.05).listen().onFinishChange(updateGraph);
+		graphControls.add(graphSettings, 'showSurface').listen().onFinishChange(showOrHideSurface);
+		graphControls.add(graphSettings, 'showVertices').listen().onFinishChange(showOrHideVertices);
 		graphControls.add(graphSettings, 'showAxes').listen().onFinishChange((val) => { axesHelper.material.visible = val; });
 
 		let directionalLightTop = new THREE.DirectionalLight( 0xffffff, 0.8 );
@@ -100,18 +105,21 @@ function grapher() {
 		scene.add(directionalLightTop);
 		scene.add(directionalLightBottom);
 
+		stats = new Stats();
+		//stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
+		//stats.showPanel(0);
+		stats.showPanel(2);
+		document.body.appendChild( stats.dom );
+
 		let light = new THREE.AmbientLight( 0xffffff , 0.2); // soft white light
 		scene.add( light );
 
-		stats = new Stats();
-		stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
-		stats.showPanel(0);
-		//stats.showPanel(2);
-		document.body.appendChild( stats.dom );
-
 		axesHelper = new THREE.AxesHelper(25);
 		scene.add(axesHelper);
-		
+
+		errorTextMesh = renderTextModel("Uh oh.", false);
+		scene.add(errorTextMesh);
+
 		graphSettings.heightFunction = parseFunctionString(graphSettings.function);
 		updateGraph();
 	}
@@ -137,12 +145,16 @@ function grapher() {
 				}
 			}			
 			let func = expr.toJSFunction("x,y");
+			errorTextMesh.visible = false;
+			axesHelper.material.visible = true;
 			return func;
 		} catch (error) {
 			removeGraphMesh();
+			removeVertexGroup();
 			graphSettings.showAxes = false;
 			axesHelper.material.visible = false;
-			renderTextModel('Whoops.');
+			//renderTextModel('Whoops.');
+			errorTextMesh.visible = true;
 			alert("Uh oh. That isn't a valid function.");
 			console.error(error);
 		}
@@ -158,18 +170,53 @@ function grapher() {
 			renderer.renderLists.dispose();
 		}
 	}
+	function removeVertexGroup() {
+		let oldGroup = scene.getObjectByName('vertexGroup');
+		if (oldGroup) {
+			for (let i = 0; i < oldGroup.children.length; i++) {
+				let vertex = oldGroup.children[i];
+				vertex.geometry.dispose();
+				vertex.material.dispose();
+				scene.remove(vertex);
+			}
+			scene.remove(oldGroup);
+			renderer.renderLists.dispose();
+		}
+	}
+
+	function showOrHideVertices(show) {
+		let vertexGroup = scene.getObjectByName("vertexGroup");
+		vertexGroup.traverse(function(child) {
+			child.visible = show;
+		});
+	}
+
+	function showOrHideSurface(show) {
+		let surface = scene.getObjectByName("graphMesh");
+		surface.visible = show;
+	}
 
 	function updateGraph() {
 		if (graphSettings.heightFunction == undefined) return;
 		removeGraphMesh();
+		removeVertexGroup();
+		let step = graphSettings.step;
+		if (panControls.panning && step < 1) {
+			step = 1;
+		}
 		graph = new Graph(
 			[graphSettings.xRangeMin, graphSettings.xRangeMax],
 			[graphSettings.yRangeMin, graphSettings.yRangeMax],
-			graphSettings.step, 
+			step, 
 			graphSettings.heightFunction,
 		);
+		if (graphSettings.showVertices) {
+			let vertexGroup = createVertices(graph, graphSettings.showVertices);
+			scene.add(vertexGroup);
+		}
 		let mesh = createGraphMesh(graph);
 		mesh.name = 'graphMesh';
+		mesh.visible = graphSettings.showSurface;
 		scene.add(mesh);
 	}
 
@@ -233,25 +280,26 @@ function grapher() {
 		return mesh;
 	}
 
-	function drawVertices(scene) {
-		function createPointSphere(radius, color) {
-			let geometry = new THREE.SphereGeometry(radius, 4, 2 );
-			let material = new THREE.MeshBasicMaterial( {color: color} );
-			let sphere = new THREE.Mesh( geometry, material );
-			return sphere;
-		}
+	function createVertices(graph, visible) {
+		let vertices = new THREE.Group();
 		for (let i = 0; i < graph.points.length; i++) {
 			let p = graph.points[i];
 			let rgbColor = getColorFromHeight(p, graph);
 			let color = new THREE.Color(rgbColor[0], rgbColor[1], rgbColor[2]);
-			let sphere = createPointSphere(0.05, color);
+			const radius = 0.1;
+			let geometry = new THREE.SphereGeometry(radius, 4, 2 );
+			let material = new THREE.MeshBasicMaterial( {color: color} );
+			let sphere = new THREE.Mesh( geometry, material );
+			sphere.visible = visible;
 			sphere.position.set(
 				p.x, 
 				p.z, 
 				p.y
 			);
-			scene.add(sphere);
+			vertices.add(sphere);
 		}
+		vertices.name = "vertexGroup";
+		return vertices;
 	}
 	
 	function getColorFromHeight(point, graph) {
@@ -260,33 +308,7 @@ function grapher() {
 		return [1 - Math.min(1, zNorm*2), 1, Math.max(1, zNorm*2) - 1];
 	}
 
-	function getAxes(length) {
-		let pointsX = [
-			new THREE.Vector3(-1*length, 0, 0),
-			new THREE.Vector3(length, 0, 0),
-		]
-		let pointsY = [
-			new THREE.Vector3(0, -1*length, 0),
-			new THREE.Vector3(0, length, 0),
-		]
-		let pointsZ = [
-			new THREE.Vector3(0,0,-1*length),
-			new THREE.Vector3(0,0,length),
-		]
-		let geometryX = new THREE.BufferGeometry().setFromPoints(pointsX);
-		let materialX = new THREE.LineBasicMaterial( { color: 0xff0000 } );
-		let lineX = new THREE.Line(geometryX, materialX);
-		let geometryY = new THREE.BufferGeometry().setFromPoints(pointsY);
-		let materialY = new THREE.LineBasicMaterial( { color: 0x00ff00 } );
-		let lineY = new THREE.Line(geometryY, materialY);
-		let geometryZ = new THREE.BufferGeometry().setFromPoints(pointsZ);
-		let materialZ = new THREE.LineBasicMaterial( { color: 0x0000ff } );
-		let lineZ = new THREE.Line(geometryZ, materialZ);
-		return [lineX, lineY, lineZ];
-
-	}
-
-	function renderTextModel(text) {
+	function renderTextModel(text, visible) {
 		if (font == undefined) return;
 		let textGeometry = new THREE.TextGeometry(text, {
 			font: font,
@@ -303,15 +325,15 @@ function grapher() {
 		let textMaterial = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
 		let mesh = new THREE.Mesh(textGeometry, textMaterial);
 		mesh.name = 'textMesh';
+		mesh.visible = visible;
     mesh.position.set(0, 0, 0);
-    scene.add(mesh);
+    return mesh;
 	}
 
 	function onWindowResize() {
 		camera.aspect = window.innerWidth / window.innerHeight;
 		camera.updateProjectionMatrix();
 		renderer.setSize(window.innerWidth, window.innerHeight);
-
 	}
 	
 	window.addEventListener('resize', onWindowResize, false);
