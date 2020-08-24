@@ -38696,7 +38696,7 @@ var TextObject = /*#__PURE__*/function () {
 }();
 
 exports.TextObject = TextObject;
-},{"three":"../node_modules/three/build/three.module.js","three/examples/fonts/helvetiker_regular.typeface.json":"../node_modules/three/examples/fonts/helvetiker_regular.typeface.json"}],"js/GraphPanControls.js":[function(require,module,exports) {
+},{"three":"../node_modules/three/build/three.module.js","three/examples/fonts/helvetiker_regular.typeface.json":"../node_modules/three/examples/fonts/helvetiker_regular.typeface.json"}],"js/graphPanControls.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38835,7 +38835,7 @@ var _GraphPlotter3D = require("./GraphPlotter3D.js");
 
 var _TextObject = require("./TextObject.js");
 
-var _GraphPanControls = require("./GraphPanControls");
+var _graphPanControls = require("./graphPanControls");
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
@@ -39012,7 +39012,7 @@ var GraphObject = /*#__PURE__*/function () {
     value: function setupPanControls(camera, domElement, speed, startCallback, moveCallback, endCallback) {
       var _this = this;
 
-      this.panControls = new _GraphPanControls.GraphPanControls(camera, domElement, speed, function () {
+      this.panControls = new _graphPanControls.GraphPanControls(camera, domElement, speed, function () {
         // START PAN
         startCallback();
       }, function (panVector) {
@@ -39118,7 +39118,7 @@ var GraphObject = /*#__PURE__*/function () {
 }();
 
 exports.GraphObject = GraphObject;
-},{"three":"../node_modules/three/build/three.module.js","./GraphPlotter3D.js":"js/GraphPlotter3D.js","./TextObject.js":"js/TextObject.js","./GraphPanControls":"js/GraphPanControls.js"}],"../node_modules/three/examples/jsm/libs/dat.gui.module.js":[function(require,module,exports) {
+},{"three":"../node_modules/three/build/three.module.js","./GraphPlotter3D.js":"js/GraphPlotter3D.js","./TextObject.js":"js/TextObject.js","./graphPanControls":"js/graphPanControls.js"}],"../node_modules/three/examples/jsm/libs/dat.gui.module.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -42317,7 +42317,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "65461" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "45739" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

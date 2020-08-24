@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { GraphPlotter3D } from './GraphPlotter3D.js'
 import { TextObject } from './TextObject.js'
-import { GraphPanControls } from './GraphPanControls'
+import { GraphPanControls } from './graphPanControls'
 
 class GraphObject {
 	constructor(scene) {
