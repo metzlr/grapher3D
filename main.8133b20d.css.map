@@ -1,1 +1,0 @@
-{"version":3,"sources":["main.css"],"names":[],"mappings":"AAAA,UACE,QAAS,CACT,WACF,CACA,OACE,UAAW,CACX,WAAY,CACZ,aACF","file":"main.8133b20d.css","sourceRoot":"../src","sourcesContent":["html, body {\n  margin: 0;\n  height: 100%; /* force body to fill window */\n}\ncanvas {\n  width: 100%;\n  height: 100%;\n  display: block;\n}"]}
