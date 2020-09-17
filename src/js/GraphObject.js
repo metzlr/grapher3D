@@ -125,7 +125,6 @@ class GraphObject {
       );
     } catch (error) {
       console.warn("Error creating graph:", error.message);
-      //alert("That isn't a valid function");
       this.showAxes = false;
       this._errorText.visible = true;
       return;
@@ -170,7 +169,6 @@ class GraphObject {
     let indices = [];
     for (let i = 0; i < graph.points.length; i++) {
       let p = graph.points[i];
-      //if (!graph.pointExists(i)) p = { x: 0.0, y: 0.0, z: 0.0 };
       vertices.push(p.x, p.z, p.y);
     }
     for (let x = 0; x < graph.gridSize.x - 1; x++) {
@@ -181,20 +179,8 @@ class GraphObject {
           graph.getGridIndex(x + 1, y + 1),
           graph.getGridIndex(x, y + 1),
         ];
-        // let checkExist = [
-        // 	graph.pointExists(square[0]),
-        // 	graph.pointExists(square[1]),
-        // 	graph.pointExists(square[2]),
-        // 	graph.pointExists(square[3]),
-        // ];
-        // let count = 0;
-        // for (let i = 0; i < checkExist.length; i++) {
-        // 	if (!checkExist[i]) count++;
-        // }
-        //if (count == 0) {
         indices.push(square[0], square[1], square[3]);
         indices.push(square[1], square[2], square[3]);
-        //}
       }
     }
     let positionBuffer = new THREE.Float32BufferAttribute(vertices, 3);
@@ -217,7 +203,6 @@ class GraphObject {
       //vertexColors: true,
       //wireframe: true,
     });
-    //console.log(material);
     let mesh = new THREE.Mesh(geometry, material);
     return mesh;
   }
@@ -264,19 +249,15 @@ class GraphObject {
     );
   }
 
+  setupFunctionInput(input, submit) {
+    submit.addEventListener("click", () => {
+      this.heightFunction = input.value;
+    });
+  }
+
   setupGUI(gui, name) {
-    // const keys = Object.keys(this.range.x);
-    // console.log(keys)
-    let graphControls = gui.addFolder(name);
-    // console.log(this.heightFunction, this.showAxes);
     const updateFunc = this._updateGraph.bind(this);
-    graphControls
-      .add(this, "_functionString")
-      .name("Function")
-      .listen()
-      .onFinishChange(updateFunc);
-    //graphControls.add(this, 'heightFunction').listen()		// Instantly updates
-    let xRangeFolder = graphControls.addFolder("X Range");
+    let xRangeFolder = gui.addFolder("X Range");
     xRangeFolder
       .add(this, "xRangeLength", 0, 200)
       .name("Length")
@@ -294,7 +275,7 @@ class GraphObject {
       .step(0.5)
       .listen()
       .onFinishChange(updateFunc);
-    let yRangeFolder = graphControls.addFolder("Y Range");
+    let yRangeFolder = gui.addFolder("Y Range");
     yRangeFolder
       .add(this, "yRangeLength", 0, 200)
       .name("Length")
@@ -312,18 +293,14 @@ class GraphObject {
       .step(0.5)
       .listen()
       .onFinishChange(updateFunc);
-    graphControls
-      .add(this, "step", 0.05, 2)
-      .name("Step Size")
-      .step(0.05)
-      .listen(); // .onFinishChange(updateFunc);
-    graphControls.add(this, "doTransition").name("Transition").listen();
-    graphControls
+    gui.add(this, "step", 0.05, 2).name("Step Size").step(0.05).listen();
+    gui.add(this, "doTransition").name("Transition").listen();
+    gui
       .add(this, "transitionSpeed", 0.5, 1.5)
       .name("Transition Speed")
       .step(0.01)
       .listen();
-    graphControls.add(this, "showAxes").name("Show Axes").listen(); //.onFinishChange((val) => { axesHelper.material.visible = val; });
+    gui.add(this, "showAxes").name("Show Axes").listen();
   }
 
   update(deltaTime) {

@@ -31,6 +31,11 @@ class SceneManager {
     let lighting = new BiDirectionalLighting(this.scene);
     let graphObj = new GraphObject(this.scene);
     graphObj.heightFunction = "cos(x) + sin(y)";
+
+    const functionInput = document.querySelector("#function-input");
+    const functionSubmit = document.querySelector("#function-input-submit");
+    graphObj.setupFunctionInput(functionInput, functionSubmit);
+
     let gui = new GUI();
     graphObj.setupGUI(gui, "Graph Settings");
     graphObj.setupPanControls(
