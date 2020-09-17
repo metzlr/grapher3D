@@ -36504,7 +36504,7 @@ var BiDirectionalLighting = /*#__PURE__*/function () {
 
   _createClass(BiDirectionalLighting, [{
     key: "update",
-    value: function update() {}
+    value: function update(deltaTime) {}
   }]);
 
   return BiDirectionalLighting;
@@ -38564,8 +38564,8 @@ var GraphPlotter3D = /*#__PURE__*/function () {
       }
 
       for (var i = 0; i < vars.length; i++) {
-        if (vars[i] !== 'x' && vars[i] !== 'y') {
-          throw Error("Unknown variables in function. Please only use \"x\" and \"y\"");
+        if (vars[i] !== "x" && vars[i] !== "y") {
+          throw Error('Unknown variables in function. Please only use "x" and "y"');
         }
       }
 
@@ -38643,17 +38643,17 @@ var TextObject = /*#__PURE__*/function () {
     _classCallCheck(this, TextObject);
 
     this.scene = scene;
-    this._text = text || 'Text';
+    this._text = text || "Text";
     this.font = new THREE.Font(_helvetiker_regularTypeface.default);
     this.geometry = new THREE.TextGeometry(this._text, {
       font: this.font,
-      size: 5,
+      size: 10,
       height: 1,
-      curveSegments: 12 // bevelEnabled: true,
-      // bevelThickness: 10,
-      // bevelSize: 8,
+      curveSegments: 7 // bevelEnabled: true,
+      // bevelThickness: 1,
+      // bevelSize: 0.15,
       // bevelOffset: 0,
-      // bevelSegments: 5
+      // bevelSegments: 3,
 
     });
     this.geometry.center();
@@ -38661,16 +38661,16 @@ var TextObject = /*#__PURE__*/function () {
       color: 0xff0000
     });
     this.mesh = new THREE.Mesh(this.geometry, this.material);
-    this.mesh.name = 'textMesh';
+    this.mesh.name = "textMesh";
     this.mesh.position.set(0, 0, 0);
-    this.rotationSpeed = 0.05;
+    this.rotationSpeed = 0.6;
     this.scene.add(this.mesh);
   }
 
   _createClass(TextObject, [{
     key: "update",
-    value: function update() {
-      this.mesh.rotateY(this.rotationSpeed);
+    value: function update(deltaTime) {
+      this.mesh.rotateY(this.rotationSpeed * deltaTime);
     }
   }, {
     key: "visible",
@@ -38856,12 +38856,12 @@ var GraphObject = /*#__PURE__*/function () {
     this.panControls = undefined;
     this._axesHelper = new THREE.AxesHelper(25);
     this.objectGroup.add(this._axesHelper);
-    this._errorText = new _TextObject.TextObject(scene, 'Whoops.');
+    this._errorText = new _TextObject.TextObject(scene, "Error");
     this._errorText.visible = false;
     this.objectGroup.add(this._errorText.mesh);
     this._graph = undefined;
     this._graphColor = 0x3393f2;
-    this._functionString = '0';
+    this._functionString = "0";
     this.range = {
       x: {
         min: -10,
@@ -38878,6 +38878,11 @@ var GraphObject = /*#__PURE__*/function () {
     };
     this._step = 0.5;
     this.surfaceMesh = undefined;
+    this.doTransition = true;
+    this.transitionSpeed = 0.9;
+    this._oldGraphPointsPoints = undefined;
+    this._newGraph = undefined;
+    this._transitioning = false;
     this.scene.add(this.objectGroup);
   }
 
@@ -38907,7 +38912,7 @@ var GraphObject = /*#__PURE__*/function () {
       this.range.x.min = min;
       this.range.x.max = max;
 
-      this._updateGraph();
+      this._updateGraph(false);
     }
   }, {
     key: "setRangeY",
@@ -38915,7 +38920,7 @@ var GraphObject = /*#__PURE__*/function () {
       this.range.y.min = min;
       this.range.y.max = max;
 
-      this._updateGraph();
+      this._updateGraph(false);
     }
   }, {
     key: "setRangeZ",
@@ -38923,30 +38928,65 @@ var GraphObject = /*#__PURE__*/function () {
       this.range.z.min = min;
       this.range.z.max = max;
 
-      this._updateGraph();
+      this._updateGraph(false);
     }
   }, {
     key: "_updateGraph",
-    value: function _updateGraph() {
-      if (this.surfaceMesh != undefined) this._meshDispose(this.surfaceMesh);
-
+    value: function _updateGraph(transition) {
       try {
         if (this._errorText.visible) {
           this.showAxes = true;
           this._errorText.visible = false;
         }
 
-        this._graph = new _GraphPlotter3D.GraphPlotter3D(this._functionString, this.range, this._step);
+        if (this._graph != undefined) {
+          this._oldGraphPoints = JSON.parse(JSON.stringify(this._graph.points));
+        }
+
+        this._newGraph = new _GraphPlotter3D.GraphPlotter3D(this._functionString, this.range, this._step);
       } catch (error) {
-        console.warn("Error creating graph:", error.message);
-        alert("That isn't a valid function");
+        console.warn("Error creating graph:", error.message); //alert("That isn't a valid function");
+
         this.showAxes = false;
         this._errorText.visible = true;
         return;
       }
 
-      this.surfaceMesh = this._createGraphMesh(this._graph, this._graphColor);
-      this.objectGroup.add(this.surfaceMesh);
+      if (transition && this._oldGraphPoints != undefined && this._oldGraphPoints.length === this._graph.points.length && this._graph.points.length === this._newGraph.points.length) {
+        this._transitioning = true;
+      } else {
+        this._graph = this._newGraph;
+
+        this._updateSurfaceMesh();
+      }
+    }
+  }, {
+    key: "_transitionUpdater",
+    value: function _transitionUpdater(oldGraphPoints, currentGraph, targetGraph, speed) {
+      var notDone = true;
+      var pointCount = currentGraph.points.length;
+
+      for (var i = 0; i < pointCount; i++) {
+        var oldZ = oldGraphPoints[i].z;
+        var targetZ = targetGraph.points[i].z;
+        var diff = targetZ - oldZ;
+        var dz = diff * speed; // if (i === 0) {
+        //   console.log(dz);
+        //   console.log(oldZ, currentGraph.points[i].z);
+        // }
+        //console.log(oldZ, currentGraph[i])
+
+        currentGraph.points[i].z += dz;
+
+        if (i === pointCount - 1 && Math.abs(currentGraph.points[i].z - targetZ) < Math.abs(diff) * 0.01) {
+          //console.log(currentGraph.points[i].z, oldZ, targetZ, diff, speed, dz);
+          notDone = false;
+        }
+      }
+
+      this._updateSurfaceMesh();
+
+      return notDone;
     }
   }, {
     key: "_createGraphMesh",
@@ -38970,7 +39010,7 @@ var GraphObject = /*#__PURE__*/function () {
           // 	graph.pointExists(square[3]),
           // ];
           // let count = 0;
-          // for (let i = 0; i < checkExist.length; i++) { 
+          // for (let i = 0; i < checkExist.length; i++) {
           // 	if (!checkExist[i]) count++;
           // }
           //if (count == 0) {
@@ -38983,7 +39023,7 @@ var GraphObject = /*#__PURE__*/function () {
       var positionBuffer = new THREE.Float32BufferAttribute(vertices, 3); //let colorBuffer = new THREE.Float32BufferAttribute(colors, 3);
 
       geometry.setIndex(indices);
-      geometry.setAttribute('position', positionBuffer); //geometry.setAttribute('color', colorBuffer);
+      geometry.setAttribute("position", positionBuffer); //geometry.setAttribute('color', colorBuffer);
 
       geometry.computeVertexNormals();
       var xRangeTotal = Math.abs(graph.range.x[1] - graph.range.x[0]);
@@ -38999,6 +39039,13 @@ var GraphObject = /*#__PURE__*/function () {
 
       var mesh = new THREE.Mesh(geometry, material);
       return mesh;
+    }
+  }, {
+    key: "_updateSurfaceMesh",
+    value: function _updateSurfaceMesh() {
+      if (this.surfaceMesh != undefined) this._meshDispose(this.surfaceMesh);
+      this.surfaceMesh = this._createGraphMesh(this._graph, this._graphColor);
+      this.objectGroup.add(this.surfaceMesh);
     }
   }, {
     key: "_meshDispose",
@@ -39039,24 +39086,30 @@ var GraphObject = /*#__PURE__*/function () {
 
       var updateFunc = this._updateGraph.bind(this);
 
-      graphControls.add(this, '_functionString').name("Function").listen().onFinishChange(updateFunc); //graphControls.add(this, 'heightFunction').listen()		// Instantly updates
+      graphControls.add(this, "_functionString").name("Function").listen().onFinishChange(updateFunc); //graphControls.add(this, 'heightFunction').listen()		// Instantly updates
 
       var xRangeFolder = graphControls.addFolder("X Range");
-      xRangeFolder.add(this, 'xRangeLength', 0, 200).name("Length").step(0.25).listen();
-      xRangeFolder.add(this.range.x, 'min', -100, 100).name("Min").step(0.5).listen().onFinishChange(updateFunc);
-      xRangeFolder.add(this.range.x, 'max', -100, 100).name("Max").step(0.5).listen().onFinishChange(updateFunc);
+      xRangeFolder.add(this, "xRangeLength", 0, 200).name("Length").step(0.25).listen();
+      xRangeFolder.add(this.range.x, "min", -100, 100).name("Min").step(0.5).listen().onFinishChange(updateFunc);
+      xRangeFolder.add(this.range.x, "max", -100, 100).name("Max").step(0.5).listen().onFinishChange(updateFunc);
       var yRangeFolder = graphControls.addFolder("Y Range");
-      yRangeFolder.add(this, 'yRangeLength', 0, 200).name("Length").step(0.25).listen();
-      yRangeFolder.add(this.range.y, 'min', -100, 100).name("Min").step(0.5).listen().onFinishChange(updateFunc);
-      yRangeFolder.add(this.range.y, 'max', -100, 100).name("Max").step(0.5).listen().onFinishChange(updateFunc);
-      graphControls.add(this, 'step', 0.05, 2).name("Step").step(0.05).listen(); // .onFinishChange(updateFunc);
+      yRangeFolder.add(this, "yRangeLength", 0, 200).name("Length").step(0.25).listen();
+      yRangeFolder.add(this.range.y, "min", -100, 100).name("Min").step(0.5).listen().onFinishChange(updateFunc);
+      yRangeFolder.add(this.range.y, "max", -100, 100).name("Max").step(0.5).listen().onFinishChange(updateFunc);
+      graphControls.add(this, "step", 0.05, 2).name("Step Size").step(0.05).listen(); // .onFinishChange(updateFunc);
 
-      graphControls.add(this, 'showAxes').name("Show Axes").listen(); //.onFinishChange((val) => { axesHelper.material.visible = val; });
+      graphControls.add(this, "doTransition").name("Transition").listen();
+      graphControls.add(this, "transitionSpeed", 0.5, 1.5).name("Transition Speed").step(0.01).listen();
+      graphControls.add(this, "showAxes").name("Show Axes").listen(); //.onFinishChange((val) => { axesHelper.material.visible = val; });
     }
   }, {
     key: "update",
-    value: function update() {
-      this._errorText.update();
+    value: function update(deltaTime) {
+      this._errorText.update(deltaTime);
+
+      if (this._transitioning) {
+        this._transitioning = this._transitionUpdater(this._oldGraphPoints, this._graph, this._newGraph, this.transitionSpeed * deltaTime);
+      }
     }
   }, {
     key: "showAxes",
@@ -39074,7 +39127,7 @@ var GraphObject = /*#__PURE__*/function () {
     set: function set(str) {
       this._functionString = str;
 
-      this._updateGraph();
+      this._updateGraph(this.doTransition);
     }
   }, {
     key: "step",
@@ -39084,7 +39137,7 @@ var GraphObject = /*#__PURE__*/function () {
     set: function set(val) {
       this._step = val;
 
-      this._updateGraph();
+      this._updateGraph(false);
     }
   }, {
     key: "graphColor",
@@ -42065,6 +42118,8 @@ var SceneManager = /*#__PURE__*/function () {
       canvas: canvas,
       antialias: true
     });
+    this._clock = new THREE.Clock();
+    this.deltaTime = undefined;
     this.controls = this._setupOrbitControls(this.camera, this.renderer);
     this.sceneObjects = this._createSceneObjects();
   }
@@ -42076,7 +42131,7 @@ var SceneManager = /*#__PURE__*/function () {
 
       var lighting = new _BiDirectionalLighting.BiDirectionalLighting(this.scene);
       var graphObj = new _GraphObject.GraphObject(this.scene);
-      graphObj.heightFunction = 'cos(x) + sin(y)';
+      graphObj.heightFunction = "cos(x) + sin(y)";
       var gui = new _datGui.GUI();
       graphObj.setupGUI(gui, "Graph Settings");
       graphObj.setupPanControls(this.camera, this.renderer.domElement, 0.1, function () {
@@ -42099,6 +42154,10 @@ var SceneManager = /*#__PURE__*/function () {
   }, {
     key: "update",
     value: function update() {
+      var _this2 = this;
+
+      this.deltaTime = this._clock.getDelta(); // Get time since last frame
+
       if (this.resizeRendererToDisplaySize(this.renderer)) {
         var canvas = this.renderer.domElement; // console.log(canvas);
 
@@ -42107,7 +42166,7 @@ var SceneManager = /*#__PURE__*/function () {
       }
 
       this.sceneObjects.forEach(function (item) {
-        item.update();
+        item.update(_this2.deltaTime);
       });
       this.renderer.render(this.scene, this.camera);
     }
@@ -42317,7 +42376,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "40475" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "42093" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

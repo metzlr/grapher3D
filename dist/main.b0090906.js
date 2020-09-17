@@ -25,4 +25,4 @@ module.exports={glyphs:{"ο":{x_min:0,x_max:712,ha:815,o:"m 356 -25 q 96 88 192 
 },{}],"d6sW":[function(require,module,exports) {
 "use strict";var e=require("./SceneManager.js"),n=t(require("three/examples/jsm/libs/stats.module"));function t(e){return e&&e.__esModule?e:{default:e}}!function(){var t=document.getElementById("canvas"),a=new e.SceneManager(t),u=function(){var e=new n.default;return e.showPanel(1),e.showPanel(0),e}();document.body.appendChild(u.dom),function e(){requestAnimationFrame(e);a.update();u.update()}()}();
 },{"./SceneManager.js":"L3Rk","three/examples/jsm/libs/stats.module":"eCSS"}]},{},["d6sW"], null)
-//# sourceMappingURL=/main.b0090906.js.map
+//# sourceMappingURL=main.b0090906.js.map

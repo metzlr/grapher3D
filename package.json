@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "parcel src/index.html",
-    "prod": "parcel build src/index.html",
-    "deploy": "parcel build src/index.html && gh-pages -d dist -b gh-pages -m 'Deploying to Github Pages'"
+    "dev": "parcel src/index.html --no-autoinstall -p 8000",
+    "prod": "parcel build src/index.html --public-url ./",
+    "clear-build-cache": "rm -rf .cache/ dist/",
+    "deploy": "parcel build src/index.html --public-url ./ && gh-pages -d dist -b gh-pages -m 'Deploying to Github Pages'"
   },
   "repository": {
     "type": "git",
