@@ -38933,6 +38933,8 @@ var GraphObject = /*#__PURE__*/function () {
   }, {
     key: "_updateGraph",
     value: function _updateGraph(transition) {
+      if (this.surfaceMesh != undefined) this._meshDispose(this.surfaceMesh);
+
       try {
         if (this._errorText.visible) {
           this.showAxes = true;
@@ -38964,22 +38966,17 @@ var GraphObject = /*#__PURE__*/function () {
     key: "_transitionUpdater",
     value: function _transitionUpdater(oldGraphPoints, currentGraph, targetGraph, speed) {
       var notDone = true;
+      if (this.surfaceMesh != undefined) this._meshDispose(this.surfaceMesh);
       var pointCount = currentGraph.points.length;
 
       for (var i = 0; i < pointCount; i++) {
         var oldZ = oldGraphPoints[i].z;
         var targetZ = targetGraph.points[i].z;
         var diff = targetZ - oldZ;
-        var dz = diff * speed; // if (i === 0) {
-        //   console.log(dz);
-        //   console.log(oldZ, currentGraph.points[i].z);
-        // }
-        //console.log(oldZ, currentGraph[i])
-
+        var dz = diff * speed;
         currentGraph.points[i].z += dz;
 
         if (i === pointCount - 1 && Math.abs(currentGraph.points[i].z - targetZ) < Math.abs(diff) * 0.01) {
-          //console.log(currentGraph.points[i].z, oldZ, targetZ, diff, speed, dz);
           notDone = false;
         }
       }
@@ -39043,7 +39040,6 @@ var GraphObject = /*#__PURE__*/function () {
   }, {
     key: "_updateSurfaceMesh",
     value: function _updateSurfaceMesh() {
-      if (this.surfaceMesh != undefined) this._meshDispose(this.surfaceMesh);
       this.surfaceMesh = this._createGraphMesh(this._graph, this._graphColor);
       this.objectGroup.add(this.surfaceMesh);
     }
@@ -42376,7 +42372,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "42093" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "34171" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

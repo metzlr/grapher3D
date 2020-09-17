@@ -109,6 +109,7 @@ class GraphObject {
   }
 
   _updateGraph(transition) {
+    if (this.surfaceMesh != undefined) this._meshDispose(this.surfaceMesh);
     try {
       if (this._errorText.visible) {
         this.showAxes = true;
@@ -144,23 +145,18 @@ class GraphObject {
 
   _transitionUpdater(oldGraphPoints, currentGraph, targetGraph, speed) {
     let notDone = true;
+    if (this.surfaceMesh != undefined) this._meshDispose(this.surfaceMesh);
     const pointCount = currentGraph.points.length;
     for (let i = 0; i < pointCount; i++) {
       const oldZ = oldGraphPoints[i].z;
       const targetZ = targetGraph.points[i].z;
       const diff = targetZ - oldZ;
       const dz = diff * speed;
-      // if (i === 0) {
-      //   console.log(dz);
-      //   console.log(oldZ, currentGraph.points[i].z);
-      // }
-      //console.log(oldZ, currentGraph[i])
       currentGraph.points[i].z += dz;
       if (
         i === pointCount - 1 &&
         Math.abs(currentGraph.points[i].z - targetZ) < Math.abs(diff) * 0.01
       ) {
-        //console.log(currentGraph.points[i].z, oldZ, targetZ, diff, speed, dz);
         notDone = false;
       }
     }
@@ -227,7 +223,6 @@ class GraphObject {
   }
 
   _updateSurfaceMesh() {
-    if (this.surfaceMesh != undefined) this._meshDispose(this.surfaceMesh);
     this.surfaceMesh = this._createGraphMesh(this._graph, this._graphColor);
     this.objectGroup.add(this.surfaceMesh);
   }
