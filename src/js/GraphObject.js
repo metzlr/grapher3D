@@ -255,7 +255,7 @@ class GraphObject {
     });
   }
 
-  setupGUI(gui, name) {
+  setupGUI(gui) {
     const updateFunc = this._updateGraph.bind(this);
     let xRangeFolder = gui.addFolder("X Range");
     xRangeFolder
