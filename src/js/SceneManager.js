@@ -35,7 +35,7 @@ class SceneManager {
     const functionSubmit = document.querySelector("#function-input-submit");
     graphObj.setupFunctionInput(functionInput, functionSubmit);
 
-    const defaultFunction = "cost(x) + sin(y)";
+    const defaultFunction = "cos(x) + sin(y)";
     graphObj.heightFunction = defaultFunction;
     functionInput.value = defaultFunction;
 
