@@ -63,7 +63,7 @@ class GraphObject {
   }
   set graphColor(val) {
     this._graphColor = val;
-    this._updateGraph();
+    this._updateGraph(false);
   }
   get xRangeLength() {
     return this._calculateRangeLength(this.range.x);
@@ -89,7 +89,7 @@ class GraphObject {
     let dx = val - currRange;
     range.min -= dx / 2;
     range.max += dx / 2;
-    this._updateGraph();
+    this._updateGraph(false);
   }
 
   setRangeX(min, max) {
@@ -108,8 +108,8 @@ class GraphObject {
     this._updateGraph(false);
   }
 
-  _updateGraph(transition) {
-    if (this.surfaceMesh != undefined) this._meshDispose(this.surfaceMesh);
+  _updateGraph(doTransition) {
+    const transition = doTransition ?? false;
     try {
       if (this._errorText.visible) {
         this.showAxes = true;
@@ -144,7 +144,6 @@ class GraphObject {
 
   _transitionUpdater(oldGraphPoints, currentGraph, targetGraph, speed) {
     let notDone = true;
-    if (this.surfaceMesh != undefined) this._meshDispose(this.surfaceMesh);
     const pointCount = currentGraph.points.length;
     for (let i = 0; i < pointCount; i++) {
       const oldZ = oldGraphPoints[i].z;
@@ -152,14 +151,15 @@ class GraphObject {
       const diff = targetZ - oldZ;
       const dz = diff * speed;
       currentGraph.points[i].z += dz;
-      if (
-        i === pointCount - 1 &&
-        Math.abs(currentGraph.points[i].z - targetZ) < Math.abs(diff) * 0.01
-      ) {
-        notDone = false;
+      if (i === pointCount - 1) {
+        if (
+          (diff >= 0 && currentGraph.points[i].z >= targetZ) ||
+          (diff < 0 && currentGraph.points[i].z <= targetZ)
+        ) {
+          notDone = false;
+        }
       }
     }
-    this._updateSurfaceMesh();
     return notDone;
   }
 
@@ -208,6 +208,7 @@ class GraphObject {
   }
 
   _updateSurfaceMesh() {
+    if (this.surfaceMesh != undefined) this._meshDispose(this.surfaceMesh);
     this.surfaceMesh = this._createGraphMesh(this._graph, this._graphColor);
     this.objectGroup.add(this.surfaceMesh);
   }
@@ -312,6 +313,11 @@ class GraphObject {
         this._newGraph,
         this.transitionSpeed * deltaTime
       );
+      if (!this._transitioning) {
+        // Done transitioning, make sure graph is exactly set to target (since it can overstep)
+        this._graph = this._newGraph;
+      }
+      this._updateSurfaceMesh();
     }
   }
 }

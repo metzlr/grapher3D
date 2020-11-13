@@ -38904,7 +38904,7 @@ var GraphObject = /*#__PURE__*/function () {
       range.min -= dx / 2;
       range.max += dx / 2;
 
-      this._updateGraph();
+      this._updateGraph(false);
     }
   }, {
     key: "setRangeX",
@@ -38932,8 +38932,8 @@ var GraphObject = /*#__PURE__*/function () {
     }
   }, {
     key: "_updateGraph",
-    value: function _updateGraph(transition) {
-      if (this.surfaceMesh != undefined) this._meshDispose(this.surfaceMesh);
+    value: function _updateGraph(doTransition) {
+      var transition = doTransition !== null && doTransition !== void 0 ? doTransition : false;
 
       try {
         if (this._errorText.visible) {
@@ -38965,7 +38965,6 @@ var GraphObject = /*#__PURE__*/function () {
     key: "_transitionUpdater",
     value: function _transitionUpdater(oldGraphPoints, currentGraph, targetGraph, speed) {
       var notDone = true;
-      if (this.surfaceMesh != undefined) this._meshDispose(this.surfaceMesh);
       var pointCount = currentGraph.points.length;
 
       for (var i = 0; i < pointCount; i++) {
@@ -38975,12 +38974,12 @@ var GraphObject = /*#__PURE__*/function () {
         var dz = diff * speed;
         currentGraph.points[i].z += dz;
 
-        if (i === pointCount - 1 && Math.abs(currentGraph.points[i].z - targetZ) < Math.abs(diff) * 0.01) {
-          notDone = false;
+        if (i === pointCount - 1) {
+          if (diff >= 0 && currentGraph.points[i].z >= targetZ || diff < 0 && currentGraph.points[i].z <= targetZ) {
+            notDone = false;
+          }
         }
       }
-
-      this._updateSurfaceMesh();
 
       return notDone;
     }
@@ -39026,6 +39025,7 @@ var GraphObject = /*#__PURE__*/function () {
   }, {
     key: "_updateSurfaceMesh",
     value: function _updateSurfaceMesh() {
+      if (this.surfaceMesh != undefined) this._meshDispose(this.surfaceMesh);
       this.surfaceMesh = this._createGraphMesh(this._graph, this._graphColor);
       this.objectGroup.add(this.surfaceMesh);
     }
@@ -39093,6 +39093,13 @@ var GraphObject = /*#__PURE__*/function () {
 
       if (this._transitioning) {
         this._transitioning = this._transitionUpdater(this._oldGraphPoints, this._graph, this._newGraph, this.transitionSpeed * deltaTime);
+
+        if (!this._transitioning) {
+          // Done transitioning, make sure graph is exactly set to target (since it can overstep)
+          this._graph = this._newGraph;
+        }
+
+        this._updateSurfaceMesh();
       }
     }
   }, {
@@ -39131,7 +39138,7 @@ var GraphObject = /*#__PURE__*/function () {
     set: function set(val) {
       this._graphColor = val;
 
-      this._updateGraph();
+      this._updateGraph(false);
     }
   }, {
     key: "xRangeLength",
@@ -42118,8 +42125,9 @@ var SceneManager = /*#__PURE__*/function () {
       var functionInput = document.querySelector("#function-input");
       var functionSubmit = document.querySelector("#function-input-submit");
       graphObj.setupFunctionInput(functionInput, functionSubmit);
-      graphObj.heightFunction = "cos(x) + sin(y)";
-      functionInput.value = "cos(x) + sin(y)";
+      var defaultFunction = "cos(x) + sin(y)";
+      graphObj.heightFunction = defaultFunction;
+      functionInput.value = defaultFunction;
       var gui = new _datGui.GUI();
       graphObj.setupGUI(gui, "Graph Settings");
       graphObj.setupPanControls(this.camera, this.renderer.domElement, 0.1, function () {
@@ -42371,7 +42379,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "41279" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "36769" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
