@@ -10,6 +10,26 @@ import Stats from "three/examples/jsm/libs/stats.module";
   }
 
   renderScene();
+  setupHelpModal();
+
+  function setupHelpModal() {
+    const modal = document.getElementById("help-modal");
+    const btn = document.getElementById("help-button");
+    const closeSpan = modal.querySelector(".modal-close");
+    btn.onclick = () => {
+      modal.style.display = "block";
+    };
+
+    closeSpan.onclick = () => {
+      modal.style.display = "none";
+    };
+
+    window.onclick = function (event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    };
+  }
 
   function renderScene() {
     requestAnimationFrame(renderScene);

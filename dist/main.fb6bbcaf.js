@@ -39071,6 +39071,8 @@ var GraphObject = /*#__PURE__*/function () {
   }, {
     key: "setupGUI",
     value: function setupGUI(gui) {
+      gui.width = 275;
+
       var updateFunc = this._updateGraph.bind(this);
 
       var xRangeFolder = gui.addFolder("X Range");
@@ -42332,6 +42334,27 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
   }
 
   renderScene();
+  setupHelpModal();
+
+  function setupHelpModal() {
+    var modal = document.getElementById("help-modal");
+    var btn = document.getElementById("help-button");
+    var closeSpan = modal.querySelector(".modal-close");
+
+    btn.onclick = function () {
+      modal.style.display = "block";
+    };
+
+    closeSpan.onclick = function () {
+      modal.style.display = "none";
+    };
+
+    window.onclick = function (event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    };
+  }
 
   function renderScene() {
     requestAnimationFrame(renderScene);
@@ -42379,7 +42402,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "36769" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "33163" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
